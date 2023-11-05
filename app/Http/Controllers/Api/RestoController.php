@@ -8,6 +8,7 @@ use App\Models\City;
 use App\Models\Detail_Order;
 use App\Models\Resto;
 use App\Models\Image;
+use App\Models\Menu;
 use App\Models\Province;
 use App\Models\Review;
 use App\Models\Table;
@@ -20,13 +21,12 @@ class RestoController extends Controller
         $data = Resto::all();
 
         foreach($data as $x => $item) {
-            $image = Image::where('Resto_id',$item->id)->pluck('image');
-            $data[$x]->photo = $image;
-            $url = url("storage");
-            $url_image = collect($image)->map(function ($image) use ($url) {
-                return $url ."/". $image;
-            }); 
-            $data[$x]->photo = $url_image;
+            $image = Image::where('resto_id',$item->id)->first();
+            if($image) {
+                $data[$x]->photo = url('storage/'.$image->image);
+            } else {
+                $data[$x]->photo = null;
+            }
 
             if($item->category_id) {
                 $data[$x]->category = $item->category->category;
@@ -58,16 +58,18 @@ class RestoController extends Controller
     public function detail($id) {
         $data = Resto::findOrFail($id);
 
-        $image = Image::where('Resto_id',$data->id)->pluck('image');
-        $data->photo = $image;
-        $url = url("storage");
-        $url_image = collect($image)->map(function ($image) use ($url) {
-            return $url ."/". $image;
-        }); 
-        $data->photo = $url_image;
+        $images = Image::where('resto_id',$id)->get();
+        if($images) {
+            foreach ($images as $x => $image) {
+                $images[$x]->photo_url = url('storage/'.$image->image);
+            }
+            $data->photo_url = $images;
+        } else {
+            $data->photo_url = null;
+        }
 
         if($data->category_id) {
-            $data->category = $data->category->category;
+            $data->category = $data->category->name;
         } else {
             $data->category = null;
         }
@@ -76,46 +78,21 @@ class RestoController extends Controller
         $data->city = $data->city->name;
 
         $all_tables = Table::where('resto_id',$id)->count();
-        $table_reserved = Detail_Order::where('resto_id',$id)->count();
+        $table_reserved = Table::where('resto_id',$id)->count();
         
         $data->all_tables = $all_tables;
         $data->table_reserved = $table_reserved;
         $data->empty_table = $all_tables - $table_reserved;
 
-        // $reviews = Review::where('Resto_id',$data->id)->first();
-        // if(!$reviews) {
-        //     $data->rating = null;
-        // } else {
-        //     $average_rating = Review::where('Resto_id',$data->id)->average('rating');
-        //     $getRating = substr($average_rating, 0, 3);
-        //     $formattedRating = str_replace('.', ',', $getRating);
-        //     $data->rating = $formattedRating;
-        // }
-
-        // $review = Review::where('Resto_id',$id)->get();
-
-        // foreach($review as $x => $item) {
-        //     $review[$x]->username = $item->maker->name;
-
-        //     $updated_at = $item->updated_at;
-
-        //     if(now()->diffInSeconds($updated_at) === 0) {
-        //         $review[$x]->last_made = "now";
-        //     } else if(now()->diffInSeconds($updated_at) < 60) {
-        //         $review[$x]->last_made = now()->diffInSeconds($updated_at) . " seconds ago";
-        //     } else if(now()->diffInSeconds($updated_at) < 3600) {
-        //         $review[$x]->last_made = now()->diffInMinutes($updated_at) . " minutes ago";
-        //     } else if(now()->diffInSeconds($updated_at) < 86400) {
-        //         $review[$x]->last_made = now()->diffInHours($updated_at) . " hours ago";
-        //     } else if(now()->diffInSeconds($updated_at) < 172800) {
-        //         $review[$x]->last_made = "yesterday";
-        //     } else if(now()->diffInSeconds($updated_at) >= 172800) {
-        //         $dateTime = new DateTime($updated_at);
-        //         $formated_date = $dateTime->format('H:i d-M-Y');
-        //         $date = Carbon::createFromFormat('H:i d-M-Y', $formated_date);
-        //         $review[$x]->last_made = $date->format('H.i l, d F Y');
-        //     }
-        // }
+        $reviews = Review::where('Resto_id',$data->id)->first();
+        if(!$reviews) {
+            $data->rating = null;
+        } else {
+            $average_rating = Review::where('Resto_id',$data->id)->average('rating');
+            $getRating = substr($average_rating, 0, 3);
+            $formattedRating = str_replace('.', ',', $getRating);
+            $data->rating = $formattedRating;
+        }
 
         return response()->json([
             "status" => 200,
@@ -128,11 +105,10 @@ class RestoController extends Controller
         $tables = Table::where('resto_id',$id)->get();
 
         foreach ($tables as $x => $table) {
-            $booking = Detail_Order::where('table_id',$table->id)->first();
-            if($booking) {
-                $tables[$x]->booked = true;
-            } else {
+            if($table->ordered === null) {
                 $tables[$x]->booked = false;
+            } else {
+                $tables[$x]->booked = true;
             }
         }
 
@@ -143,8 +119,21 @@ class RestoController extends Controller
         );
     }
 
+    public function list_menu($id) {
+        $menus = Menu::where('resto_id',$id)->get();
+        foreach ($menus as $x => $menu) {
+            $menus[$x]->image = url('storage/'.$menu->photo);
+        }
+
+        return response()->json([
+            "status" => 200,
+            "data" => $menus],
+            200
+        );
+    }
+
     public function list_category() {
-        $data = Category::orderBy('category','asc')->get();
+        $data = Category::orderBy('name','asc')->get();
 
         return response()->json([
             "status" => 200,
@@ -156,13 +145,12 @@ class RestoController extends Controller
         $data = Resto::where('category_id',$id)->get();
 
         foreach($data as $x => $item) {
-            $image = Image::where('Resto_id',$item->id)->pluck('image');
-            $data[$x]->photo = $image;
-            $url = url("storage");
-            $url_image = collect($image)->map(function ($image) use ($url) {
-                return $url ."/". $image;
-            }); 
-            $data[$x]->photo = $url_image;
+            $image = Image::where('resto_id',$item->id)->first();
+            if($image) {
+                $data[$x]->photo = url('storage/'.$image->image);
+            } else {
+                $data[$x]->photo = null;
+            }
 
             if($item->category_id) {
                 $data[$x]->category = $item->category->category;
@@ -203,13 +191,12 @@ class RestoController extends Controller
         $data = Resto::where('province_id',$id)->get();
 
         foreach($data as $x => $item) {
-            $image = Image::where('Resto_id',$item->id)->pluck('image');
-            $data[$x]->photo = $image;
-            $url = url("storage");
-            $url_image = collect($image)->map(function ($image) use ($url) {
-                return $url ."/". $image;
-            }); 
-            $data[$x]->photo = $url_image;
+            $image = Image::where('resto_id',$item->id)->first();
+            if($image) {
+                $data[$x]->photo = url('storage/'.$image->image);
+            } else {
+                $data[$x]->photo = null;
+            }
 
             if($item->category_id) {
                 $data[$x]->category = $item->category->category;
@@ -268,13 +255,12 @@ class RestoController extends Controller
         $data = Resto::where('city_id',$id)->get();
 
         foreach($data as $x => $item) {
-            $image = Image::where('Resto_id',$item->id)->pluck('image');
-            $data[$x]->photo = $image;
-            $url = url("storage");
-            $url_image = collect($image)->map(function ($image) use ($url) {
-                return $url ."/". $image;
-            }); 
-            $data[$x]->photo = $url_image;
+            $image = Image::where('resto_id',$item->id)->first();
+            if($image) {
+                $data[$x]->photo = url('storage/'.$image->image);
+            } else {
+                $data[$x]->photo = null;
+            }
 
             if($item->category_id) {
                 $data[$x]->category = $item->category->category;

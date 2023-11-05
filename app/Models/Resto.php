@@ -11,7 +11,8 @@ class Resto extends Model
 
     protected $table = 'table_resto';
     protected $primaryKey = 'id';
-    protected $fillable = ['name','description','category_id','address','city_id','province_id','latitude','longitude'];
+    protected $fillable = ['name','description','category_id','address','city_id','province_id','contact','latitude','longitude'];
+    protected $hidden = ['category_id','city_id','province_id'];
 
     public function category() {
         return $this->belongsTo('App\Models\Category', 'category_id');

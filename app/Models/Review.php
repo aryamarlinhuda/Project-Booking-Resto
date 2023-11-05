@@ -15,7 +15,7 @@ class Review extends Model
     protected $hidden = ['resto_id','created_by','resto','user'];
 
     public function resto() {
-        return $this->belongsTo('App\Models\resto', 'resto_id');
+        return $this->belongsTo('App\Models\Resto', 'resto_id');
     }
 
     public function user() {

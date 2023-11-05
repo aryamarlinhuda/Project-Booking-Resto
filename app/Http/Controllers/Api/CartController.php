@@ -16,10 +16,18 @@ class CartController extends Controller
         $user = auth()->id();
 
         $carts = Cart::where('carted_by',$user)->get();
+        if($carts === null) {
+            return response()->json([
+                "status" => 200,
+                "data" => []],
+                200
+            );
+        }
+        
         foreach ($carts as $x => $cart) {
             $carts[$x]->resto = Resto::where('id',$cart->resto_id)->first();
+            $carts[$x]->overall_price += $cart->total_price; 
         }
-        $carts->overall_price += $carts['total_price'];
 
         return response()->json([
             "status" => 200,

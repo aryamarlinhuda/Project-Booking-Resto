@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateImageRestaurant extends Migration
+class CreateTableAdmin extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,13 @@ class CreateImageRestaurant extends Migration
      */
     public function up()
     {
-        Schema::create('image_restaurant', function (Blueprint $table) {
+        Schema::create('table_admin', function (Blueprint $table) {
             $table->id();
-            $table->string('image');
-            $table->string('alt');
-            $table->foreignId('resto_id')->references('id')->on('table_resto');
+            $table->string('name');
+            $table->string('photo')->nullable();
+            $table->string('role');
+            $table->string('phone_or_email')->uniqid();
+            $table->string('password');
             $table->timestamps();
         });
     }
@@ -29,6 +31,6 @@ class CreateImageRestaurant extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('image_restaurant');
+        Schema::dropIfExists('table_admin');
     }
 }

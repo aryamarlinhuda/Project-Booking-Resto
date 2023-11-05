@@ -40,6 +40,7 @@ Route::group(['middleware' => 'auth:api'], function() {
         Route::prefix('resto')->group(function() {
             Route::get('list','list');
             Route::get('detail/{id}','detail');
+            Route::get('menu/{id}','list_menu');
             Route::get('filter-by-category/{id}','filter_by_category');
             Route::get('filter-by-province/{id}','filter_by_province');
             Route::get('filter-by-city/{id}','filter_by_city');
@@ -61,14 +62,14 @@ Route::group(['middleware' => 'auth:api'], function() {
             Route::post('resto-via-cart','order_via_cart');
         });
     });
-    // Route::controller(ReviewController::class)->group(function() {
-    //     Route::prefix('review')->group(function() {
-    //         Route::get('list/{id}','list');
-    //         Route::post('add','add');
-    //         Route::post('edit','edit');
-    //         Route::post('delete','delete');
-    //     });
-    // });
+    Route::controller(ReviewController::class)->group(function() {
+        Route::prefix('review')->group(function() {
+            Route::get('list/{id}','list');
+            Route::post('add','add');
+            Route::post('edit','edit');
+            Route::post('delete','delete');
+        });
+    });
     Route::controller(UserController::class)->group(function() {
         Route::prefix('user')->group(function() {
             Route::get('profile','profile');

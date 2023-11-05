@@ -11,12 +11,12 @@ use Illuminate\Validation\ValidationException;
 
 class ReviewController extends Controller
 {
-    public function list(Request $request) {
+    public function list($id) {
         $user = auth()->id();
 
-        $data = Review::where('resto_id',$request->input('resto_id'))->orderBy('created_by',$user)->get();
+        $data = Review::where('resto_id',$id)->orderBy('created_by',$user)->get();
 
-        $average_rating = Review::where('resto_id',$request->input('resto_id'))->average('rating');
+        $average_rating = Review::where('resto_id',$id)->average('rating');
         $getRating = substr($average_rating, 0, 3);
         $formattedRating = str_replace('.', ',', $getRating);
         $data->rating = $formattedRating;

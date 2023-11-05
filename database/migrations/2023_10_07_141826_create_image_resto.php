@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateRestoTable extends Migration
+class CreateImageResto extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,9 @@ class CreateRestoTable extends Migration
      */
     public function up()
     {
-        Schema::create('resto_table', function (Blueprint $table) {
+        Schema::create('image_resto', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('decription');
-            $table->integer('load');
-            $table->integer('price');
-            $table->foreignId('ordered')->references('id')->on('table_order');
+            $table->string('image');
             $table->foreignId('resto_id')->references('id')->on('table_resto');
             $table->timestamps();
         });
@@ -32,6 +28,6 @@ class CreateRestoTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('resto');
+        Schema::dropIfExists('image_restaurant');
     }
 }
