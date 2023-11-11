@@ -11,6 +11,7 @@ use App\Models\Image;
 use App\Models\Menu;
 use App\Models\Province;
 use App\Models\Review;
+use App\Models\Saved;
 use App\Models\Table;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 class RestoController extends Controller
 {
     public function list() {
+        $user = auth()->id();
         $data = Resto::all();
 
         foreach($data as $x => $item) {
@@ -29,23 +31,30 @@ class RestoController extends Controller
             }
 
             if($item->category_id) {
-                $data[$x]->category = $item->category->category;
+                $data[$x]->category = $item->category;
             } else {
                 $data[$x]->category = null;
             }
 
-            $data[$x]->province = $item->province->name;
-            $data[$x]->city = $item->city->name;
+            $data[$x]->province = $item->province;
+            $data[$x]->city = $item->city;
 
-            $reviews = Review::where('Resto_id',$item->id)->first();
+            $reviews = Review::where('resto_id',$item->id)->first();
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $average_rating = Review::where('Resto_id',$item->id)->average('rating');
-                $getRating = substr($average_rating, 0, 3);
-                $formattedRating = str_replace('.', ',', $getRating);
-                $data[$x]->rating = $formattedRating;
+                $rating = Review::where('resto_id',$item->id)->average('rating');
+                $integerRating = round($rating, 1);
+                $data[$x]->rating = $integerRating;
             }
+
+            $saved = Saved::where('resto_id',$item->id)->where('saved_by',$user)->first();
+            if($saved) {
+                $data[$x]->saved = true;
+            } else {
+                $data[$x]->saved = false;
+            }
+
         }
 
         return response()->json([
@@ -88,10 +97,9 @@ class RestoController extends Controller
         if(!$reviews) {
             $data->rating = null;
         } else {
-            $average_rating = Review::where('Resto_id',$data->id)->average('rating');
-            $getRating = substr($average_rating, 0, 3);
-            $formattedRating = str_replace('.', ',', $getRating);
-            $data->rating = $formattedRating;
+            $rating = Review::where('resto_id',$data->id)->average('rating');
+            $integerRating = round($rating, 1);
+            $data[$x]->rating = $integerRating;
         }
 
         return response()->json([
@@ -158,17 +166,16 @@ class RestoController extends Controller
                 $data[$x]->category = null;
             }
 
-            $data[$x]->province = $item->province->name;
-            $data[$x]->city = $item->city->name;
+            $data[$x]->province = $item->province;
+            $data[$x]->city = $item->city;
 
             $reviews = Review::where('Resto_id',$item->id)->first();
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $average_rating = Review::where('Resto_id',$item->id)->average('rating');
-                $getRating = substr($average_rating, 0, 3);
-                $formattedRating = str_replace('.', ',', $getRating);
-                $data[$x]->rating = $formattedRating;
+                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $integerRating = round($rating, 1);
+                $data[$x]->rating = $integerRating;
             }
         }
 
@@ -204,17 +211,16 @@ class RestoController extends Controller
                 $data[$x]->category = null;
             }
 
-            $data[$x]->province = $item->province->name;
-            $data[$x]->city = $item->city->name;
+            $data[$x]->province = $item->province;
+            $data[$x]->city = $item->city;
 
             $reviews = Review::where('Resto_id',$item->id)->first();
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $average_rating = Review::where('Resto_id',$item->id)->average('rating');
-                $getRating = substr($average_rating, 0, 3);
-                $formattedRating = str_replace('.', ',', $getRating);
-                $data[$x]->rating = $formattedRating;
+                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $integerRating = round($rating, 1);
+                $data[$x]->rating = $integerRating;
             }
         }
 
@@ -229,7 +235,7 @@ class RestoController extends Controller
         $data = City::orderBy('name','asc')->get();
 
         foreach($data as $x => $item) {
-            $data[$x]->province = $item->province->name;
+            $data[$x]->province = $item->province;
         }
 
         return response()->json([
@@ -242,7 +248,7 @@ class RestoController extends Controller
         $data = City::where('province_id',$id)->orderBy('name','asc')->get();
         
         foreach($data as $x => $item) {
-            $data[$x]->province = $item->province->name;
+            $data[$x]->province = $item->province;
         }
 
         return response()->json([
@@ -268,17 +274,16 @@ class RestoController extends Controller
                 $data[$x]->category = null;
             }
 
-            $data[$x]->province = $item->province->name;
-            $data[$x]->city = $item->city->name;
+            $data[$x]->province = $item->province;
+            $data[$x]->city = $item->city;
 
             $reviews = Review::where('Resto_id',$item->id)->first();
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $average_rating = Review::where('Resto_id',$item->id)->average('rating');
-                $getRating = substr($average_rating, 0, 3);
-                $formattedRating = str_replace('.', ',', $getRating);
-                $data[$x]->rating = $formattedRating;
+                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $integerRating = round($rating, 1);
+                $data[$x]->rating = $integerRating;
             }
         }
 

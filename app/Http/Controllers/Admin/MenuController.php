@@ -8,7 +8,7 @@ use App\Models\City;
 use App\Models\Menu;
 use App\Models\Image;
 use App\Models\Province;
-use App\Models\Review;
+use App\Models\Resto;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
@@ -25,8 +25,10 @@ class MenuController extends Controller
         return view('menu.list-menu')->with('data',$data);
     }
     
-    public function create() {
-        return view('menu.create-menu');
+    public function create($id) {
+        $data = Resto::find($id);
+
+        return view('menu.create-menu')->with('data',$data);
     }
 
     public function create_process($id, Request $request) {

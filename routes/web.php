@@ -42,7 +42,7 @@ Route::middleware(['admin'])->group(function() {
             Route::delete('delete/{id}','delete');
         });
     });
-    Route::prefix('menu-resto/{id}')->controller(MenuController::class)->group(function() {
+    Route::prefix('menu-resto/{resto_id}')->controller(MenuController::class)->group(function() {
         Route::get('list','list');
         Route::get('create','create');
         Route::post('create/process','create_process');

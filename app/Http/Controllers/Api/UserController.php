@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Image;
+use App\Models\Resto;
 use App\Models\Review;
 use App\Models\Saved;
 use App\Models\User;
@@ -179,15 +181,42 @@ class UserController extends Controller
     public function saved_resto() {
         $id = auth()->id();
 
-        $saved = Saved::where('saved_by',$id)->get();
+        $data = Saved::where('saved_by',$id)->get();
 
-        foreach($saved as $x => $item) {
-            $saved[$x]->resto = $item->resto->name;
+        foreach($data as $x => $item) {
+            $resto = Resto::find($item->resto_id);
+            $data[$x]->resto = Resto::find($item->resto_id);
+
+            $image = Image::where('resto_id',$resto->id)->first();
+            if($image) {
+                $data[$x]->photo = url('storage/'.$image->image);
+            } else {
+                $data[$x]->photo = null;
+            }
+
+            if($resto->category_id) {
+                $data[$x]->category = $resto->category;
+            } else {
+                $data[$x]->category = null;
+            }
+
+            $data[$x]->province = $resto->province;
+            $data[$x]->city = $resto->city;
+
+            $reviews = Review::where('resto_id',$resto->id)->first();
+            if(!$reviews) {
+                $data[$x]->rating = null;
+            } else {
+                $average_rating = Review::where('resto_id',$resto->id)->average('rating');
+                $getRating = substr($average_rating, 0, 3);
+                $formattedRating = str_replace('.', ',', $getRating);
+                $data[$x]->rating = $formattedRating;
+            }
         }
 
         return response()->json([
             'status' => 200,
-            'data' => $saved],
+            'data' => $data],
             200
         );
     }

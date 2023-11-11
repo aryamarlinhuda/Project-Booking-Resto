@@ -42,10 +42,10 @@ class CartController extends Controller
         try {
             $request->validate([
                 "resto_id" => "required",
-                "table_number.*" => "required"
+                "table_id.*" => "required"
             ],[
                 "resto_id.required" => "Resto ID is required!",
-                "table_number.required" => "Table Number is required!"
+                "table_id.required" => "Table Number is required!"
             ]);
 
             $resto = Resto::find($request->input('resto_id'));
@@ -56,7 +56,7 @@ class CartController extends Controller
                     404
                 );
             }
-            $tables = $request->input('table_number');
+            $tables = $request->input('table_id');
 
             $cart = Cart::where('resto_id',$request->input('resto_id'))->where('carted_by',$user)->first();
             if($cart) {
@@ -72,7 +72,11 @@ class CartController extends Controller
             } else {
                 $resto = Resto::find($request->input('resto_id'));
 
-                $total_table = count($tables);
+                if(count($tables) === 1) {
+                    $total_table = 1;
+                } else {
+                    $total_table = count($tables);
+                }
                 foreach ($tables as $x => $table) {
                     $price = Table::find($table);
                     $tables[$x]->total_price += $price->price;
@@ -114,12 +118,12 @@ class CartController extends Controller
         try {
             $request->validate([
                 "cart_id" => "required",
-                "table_number.*" => "required"
+                "table_id.*" => "required"
             ],[
                 "cart_id.required" => "Cart ID is required!",
-                "table_number.required" => "Table Number is required!"
+                "table_id.required" => "Table Number is required!"
             ]);
-            $tables = $request->input('table_number');
+            $tables = $request->input('table_id');
 
             $cart = Cart::where('id',$request->input('cart_id'))->where('carted_by',$user)->first();
             if(!$cart) {

@@ -17,6 +17,7 @@ class CreateTableMenu extends Migration
             $table->id();
             $table->string('name');
             $table->string('photo')->nullable();
+            $table->string('category');
             $table->text('description')->nullable();
             $table->integer('price');
             $table->foreignId('resto_id')->references('id')->on('table_resto');

@@ -1,6 +1,6 @@
 @extends('sidebar')
 @section('title','Create Menu | Booking menu App')
-@section('menu','active')
+@section('resto','active')
 @section('create-menu')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
@@ -12,6 +12,7 @@ Back
 </a>
 <h1>Create Menu</h1>
 <hr>
+<h5><a href="{{ url('resto/detail/'.$data->id) }}"><i>Resto {{ $data->name }}</i></a></h5>
 <form action="create/process" method="POST" class="col-md-8" enctype="multipart/form-data">
     @csrf
         <div class="mt-3 mb-4">
@@ -40,6 +41,14 @@ Back
             @if(session('format'))
                 <p class="text-danger fst-italic">{{session('format')}}</p>
             @endif
+        </div>
+        <div class="mt-3 mb-4">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" aria-label="Default select example" name="category_id" id="category_id">
+                <option value=null selected disabled class="text-secondary">>>> Select Category <<<</option>
+                <option value="drink">Drink</option>
+                <option value="food">Food</option>
+            </select>
         </div>
         <div class="mt-3 mb-4">
             <label for="description" class="form-label">Description</label>
