@@ -16,17 +16,16 @@ class CartController extends Controller
         $user = auth()->id();
 
         $carts = Cart::where('carted_by',$user)->get();
-        if($carts === null) {
-            return response()->json([
-                "status" => 200,
-                "data" => []],
-                200
-            );
-        }
-        
         foreach ($carts as $x => $cart) {
+            $tables = Detail_Cart::where('cart_id',$cart->id)->get();
+            $tables = $tables->map(function ($table) {
+                $table->table = Table::where('id',$table->table_id)->first();
+                return $table;
+            });
+            $carts[$x]->tables = $tables;
+
             $carts[$x]->resto = Resto::where('id',$cart->resto_id)->first();
-            $carts[$x]->overall_price += $cart->total_price; 
+            $carts[$x]->overall_price += $cart->total_price;
         }
 
         return response()->json([
@@ -42,10 +41,12 @@ class CartController extends Controller
         try {
             $request->validate([
                 "resto_id" => "required",
-                "table_id.*" => "required"
+                "total_table" => "required",
+                "total_price" => "required"
             ],[
                 "resto_id.required" => "Resto ID is required!",
-                "table_id.required" => "Table Number is required!"
+                "total_table.required" => "Total Table is required!",
+                "total_price.required" => "Total Price is required!",
             ]);
 
             $resto = Resto::find($request->input('resto_id'));
@@ -56,51 +57,93 @@ class CartController extends Controller
                     404
                 );
             }
-            $tables = $request->input('table_id');
 
             $cart = Cart::where('resto_id',$request->input('resto_id'))->where('carted_by',$user)->first();
             if($cart) {
-                foreach ($tables as $x => $table) {
-                    $carted = Detail_Cart::where('id',$cart->id)->where('table_id',$table);
-                    if(!$carted) {
-                        Detail_Cart::create([
-                            "cart_id" => $cart->id,
-                            "table_id" => $table
-                        ]);
-                    }
-                }
+                return response()->json([
+                    "status" => 201,
+                    "message" => "Cart created successfully",
+                    "data" => $cart],
+                    201
+                );
             } else {
-                $resto = Resto::find($request->input('resto_id'));
-
-                if(count($tables) === 1) {
-                    $total_table = 1;
-                } else {
-                    $total_table = count($tables);
-                }
-                foreach ($tables as $x => $table) {
-                    $price = Table::find($table);
-                    $tables[$x]->total_price += $price->price;
-                }
-                $total_price = $tables->total->price;
-
                 $cart = Cart::create([
-                    "total_table" => $total_table,
-                    "total_price" => $total_price,
-                    "resto_id" => $resto->id,
+                    "resto_id" => $request->input("resto_id"),
+                    "total_table" => $request->input("total_table"),
+                    "total_price" => $request->input("total_price"),
                     "carted_by" => $user
                 ]);
-
-                foreach($tables as $x => $table) {
-                    Detail_Cart::create([
-                        "cart_id" => $cart->id,
-                        "table_id" => $table
-                    ]);
-                }
             }
 
             return response()->json([
                 "status" => 200,
-                "message" => "resto has been successfully added to cart"],
+                "message" => "Resto has been successfully added to cart",
+                "data" => $cart],
+                200
+            );
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                "status" => 400,
+                "errors" => $e->errors(),
+            ], 400);
+        }
+    }
+
+    public function add_table(Request $request) {
+        $user = auth()->id();
+
+        try {
+            $request->validate([
+                "cart_id" => "required",
+                "table_id" => "required"
+            ],[
+                "cart_id.required" => "Cart ID is required!",
+                "table_id.required" => "Table ID is required!"
+            ]);
+
+            $cart = Cart::where('id',$request->input('cart_id'))->where('carted_by',$user)->first();
+            if (!$cart) {
+                return response()->json([
+                    "status" => 404,
+                    "message" => "Cart ID Not Found!"],
+                    404
+                );
+            }
+
+            $carted = Detail_Cart::where('cart_id',$request->input('cart_id'))->where('table_id',$request->input('table_id'))->first();
+            if ($carted) {
+                return response()->json([
+                    "status" => 400,
+                    "message" => "Resto Table has been added to cart"],
+                    400
+                );
+            }
+
+            $table = Table::where('id',$request->input('table_id'))->where('resto_id',$cart->resto_id)->first();
+            if(!$table) {
+                return response()->json([
+                    "status" => 404,
+                    "message" => "Table Not Found!"],
+                    404
+                );
+            }
+            if($table->booked === 1) {
+                return response()->json([
+                    "status" => 403,
+                    "message" => "Table already booked"],
+                    403
+                );
+            }
+
+            Detail_cart::create([
+                "table_id" => $request->input('table_id'),
+                "cart_id" => $request->input("cart_id")
+            ]);
+
+            return response()->json([
+                "status" => 200,
+                "message" => "Resto Table has been successfully added to cart"],
                 200
             );
 
@@ -118,50 +161,68 @@ class CartController extends Controller
         try {
             $request->validate([
                 "cart_id" => "required",
-                "table_id.*" => "required"
+                "table_id" => "required",
+                "form_action" => "required"
             ],[
                 "cart_id.required" => "Cart ID is required!",
-                "table_id.required" => "Table Number is required!"
+                "table_id.required" => "Table ID is required!",
+                "form_action.required" => "Form Action is required!",
             ]);
-            $tables = $request->input('table_id');
 
             $cart = Cart::where('id',$request->input('cart_id'))->where('carted_by',$user)->first();
-            if(!$cart) {
+            if (!$cart) {
                 return response()->json([
                     "status" => 404,
-                    "message" => "cart not found"],
+                    "message" => "Cart ID Not Found!"],
                     404
                 );
             }
 
-            if(count($tables) === 0) {
-                $cart->delete();
+            $table = Table::where('id',$request->input('table_id'))->first();
+            if(!$table) {
                 return response()->json([
-                    "status" => 200,
-                    "message" => "Cart Deleted"],
-                    200
+                    "status" => 404,
+                    "message" => "Table ID Not Found!"],
+                    404
                 );
             }
 
-            $tables = Detail_Cart::where('Cart_id',$cart->id)->get();
-            $tables->delete();
-            foreach ($tables as $x => $table) {
-                $carted = Detail_Cart::where('id',$cart->id)->where('table_id',$table);
-                if(!$carted) {
-                    Detail_Cart::create([
-                        "cart_id" => $cart->id,
-                        "table_id" => $table
-                    ]);
-                }
+            $carted = Detail_Cart::where('cart_id',$request->input('cart_id'))->where('table_id',$request->input('table_id'))->first();
+            if ($carted) {
+                return response()->json([
+                    "status" => 400,
+                    "message" => "Resto Table has been added to cart"],
+                    400
+                );
             }
-            $carts = Cart::find($request->input('cart_id'));
-            $carts->detail_cart = Detail_Cart::where('Cart_id',$cart->id)->get();
+            
+            if($request->input('form_action') === "add") {
+                if($table->booked === 1) {
+                    return response()->json([
+                        "status" => 403,
+                        "message" => "Table already booked"],
+                        403
+                    );
+                }
+                Detail_cart::create([
+                    "table_id" => $request->input('table_id'),
+                    "cart_id" => $request->input("cart_id")
+                ]);
+            } else if($request->input("form_action") === "delete") {
+                Detail_cart::where('table_id', $request->input('table_id'))->delete();
+            } else {
+                return response()->json([
+                    "status" => 400,
+                    "message" => "Invalid Form Action"],
+                    400
+                );
+            }
 
             return response()->json([
                 "status" => 200,
-                "message" => "Cart has been successfully edited",
-                "data" => $carts
-                ], 200);
+                "message" => "Resto Table has been successfully edited"],
+                200
+            );
 
         } catch (ValidationException $e) {
             return response()->json([

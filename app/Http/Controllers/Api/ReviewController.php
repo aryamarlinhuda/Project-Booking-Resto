@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -14,18 +15,21 @@ class ReviewController extends Controller
     public function list($id) {
         $user = auth()->id();
 
-        $data = Review::where('resto_id',$id)->orderBy('created_by',$user)->get();
-
-        $average_rating = Review::where('resto_id',$id)->average('rating');
-        $getRating = substr($average_rating, 0, 3);
-        $formattedRating = str_replace('.', ',', $getRating);
-        $data->rating = $formattedRating;
-
+        $data = Review::where('resto_id',$id)->orderByRaw("FIELD(created_by, ". $user .")")->get();
         foreach($data as $x => $item) {
-            $data[$x]->user = $item->user;
+            $users = User::where('id',$item->created_by)->get();
+            $users = $users->map(function ($user) {
+                $photo = $user['photo'];
+                if(!$photo) {
+                    $user->photo_profile = null;
+                } else {
+                    $user->photo_profile = url('storage/'.$photo);
+                }
+                return $user;
+            });
+            $data[$x]->created = $users;
 
             $updated_at = $item->updated_at;
-
             if(now()->diffInSeconds($updated_at) === 0) {
                 $data[$x]->last_made = "now";
             } else if(now()->diffInSeconds($updated_at) < 60) {
@@ -67,7 +71,7 @@ class ReviewController extends Controller
                 "resto_id.required" => "Resto ID is required!",
             ]);
 
-            $rated = Review::where('created_by',$user)->first();
+            $rated = Review::where('resto_id',$request->input('resto_id'))->where('created_by',$user)->first();
             if($rated) {
                 return response()->json([
                     "status" => 400,
@@ -84,7 +88,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 "status" => 200,
-                "message" => "Review has been sent successfully",
+                "message" => "Review has been successfully submitted",
             ], 200);
 
         } catch (ValidationException $e) {
@@ -120,14 +124,14 @@ class ReviewController extends Controller
             } else {
                 Review::where('id',$request->input('review_id'))->update([
                     "rating" => $request->input('rating'),
-                    "description" => $request->input('review'),
+                    "review" => $request->input('review'),
                     "created_by" => $user
                 ]);
             }
 
             return response()->json([
                 "status" => 200,
-                "message" => "Review has been sent successfully",
+                "message" => "Review has been successfully edited",
             ], 200);
 
         } catch (ValidationException $e) {
@@ -159,7 +163,7 @@ class ReviewController extends Controller
 
                 return response()->json([
                     "status" => 200,
-                    "message" => "Review has been deleted successfully",
+                    "message" => "Review has been successfully deleted",
                 ], 200);
             }
         } catch (ValidationException $e) {

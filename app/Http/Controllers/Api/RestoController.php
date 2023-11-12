@@ -54,7 +54,6 @@ class RestoController extends Controller
             } else {
                 $data[$x]->saved = false;
             }
-
         }
 
         return response()->json([
@@ -65,6 +64,7 @@ class RestoController extends Controller
     }
 
     public function detail($id) {
+        $user = auth()->id();
         $data = Resto::findOrFail($id);
 
         $images = Image::where('resto_id',$id)->get();
@@ -99,7 +99,14 @@ class RestoController extends Controller
         } else {
             $rating = Review::where('resto_id',$data->id)->average('rating');
             $integerRating = round($rating, 1);
-            $data[$x]->rating = $integerRating;
+            $data->rating = $integerRating;
+        }
+
+        $saved = Saved::where('resto_id',$data->id)->where('saved_by',$user)->first();
+        if($saved) {
+            $data->saved = true;
+        } else {
+            $data->saved = false;
         }
 
         return response()->json([
@@ -173,7 +180,7 @@ class RestoController extends Controller
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $rating = Review::where('resto_id',$item->id)->average('rating');
                 $integerRating = round($rating, 1);
                 $data[$x]->rating = $integerRating;
             }
@@ -218,7 +225,7 @@ class RestoController extends Controller
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $rating = Review::where('resto_id',$item->id)->average('rating');
                 $integerRating = round($rating, 1);
                 $data[$x]->rating = $integerRating;
             }
@@ -281,7 +288,7 @@ class RestoController extends Controller
             if(!$reviews) {
                 $data[$x]->rating = null;
             } else {
-                $rating = Review::where('resto_id',$data->id)->average('rating');
+                $rating = Review::where('resto_id',$item->id)->average('rating');
                 $integerRating = round($rating, 1);
                 $data[$x]->rating = $integerRating;
             }

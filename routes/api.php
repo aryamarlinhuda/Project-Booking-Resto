@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\RestoController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,14 @@ Route::group(['middleware' => 'auth:api'], function() {
             Route::get('list','list');
             Route::get('detail/{id}','detail');
             Route::get('menu/{id}','list_menu');
+            Route::controller(TableController::class)->group(function() {
+                Route::prefix('table/{id}')->group(function() {
+                    Route::get('single','single');
+                    Route::get('double','double');
+                    Route::get('triple','triple');
+                    Route::get('quadruple','quadruple');
+                });
+            });
             Route::get('filter-by-category/{id}','filter_by_category');
             Route::get('filter-by-province/{id}','filter_by_province');
             Route::get('filter-by-city/{id}','filter_by_city');
@@ -50,6 +59,7 @@ Route::group(['middleware' => 'auth:api'], function() {
         Route::prefix('cart')->group(function() {
             Route::get('list','list');
             Route::post('add','add');
+            Route::post('add-table','add_table');
             Route::post('edit','edit');
             Route::post('remove','remove');
         });

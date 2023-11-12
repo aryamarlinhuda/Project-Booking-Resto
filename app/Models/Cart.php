@@ -12,6 +12,7 @@ class Cart extends Model
     protected $table = 'table_cart';
     protected $primaryKey = 'id';
     protected $fillable = ['resto_id','total_table','total_price','carted_by'];
+    protected $hidden =['resto_id','carted_by'];
 
     public function resto() {
         return $this->belongsTo('App\Models\Resto', 'resto_id');

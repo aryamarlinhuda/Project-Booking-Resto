@@ -12,6 +12,7 @@ class Detail_Cart extends Model
     protected $table = 'detail_cart';
     protected $primaryKey = 'id';
     protected $fillable = ['table_id','cart_id'];
+    protected $hidden = ['table_id','cart_id'];
     
     public function table() {
         return $this->belongsTo('App\Models\Table', 'table_id');
