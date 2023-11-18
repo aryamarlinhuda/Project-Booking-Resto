@@ -58,6 +58,7 @@ Route::group(['middleware' => 'auth:api'], function() {
     Route::controller(CartController::class)->group(function() {
         Route::prefix('cart')->group(function() {
             Route::get('list','list');
+            Route::get('detail/{id}','detail');
             Route::post('add','add');
             Route::post('add-table','add_table');
             Route::post('edit','edit');
@@ -68,7 +69,8 @@ Route::group(['middleware' => 'auth:api'], function() {
         Route::prefix('order')->group(function() {
             Route::get('list','list');
             Route::get('detail/{id}','detail');
-            Route::post('resto','order_resto');
+            Route::post('resto','order');
+            Route::post('resto/table','order_table');
             Route::post('resto-via-cart','order_via_cart');
         });
     });

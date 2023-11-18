@@ -11,7 +11,7 @@ class LoginController extends Controller
 {
     public function login_form() {
         if(session()->has('admin')) {
-            return redirect('destination/list')->with('success','Welcome Back!');
+            return redirect('resto/list')->with('success','Welcome Back!');
         } else {
             return view('login');
         }
@@ -53,7 +53,7 @@ class LoginController extends Controller
             session()->put('admin',$id);
             session()->put('name',$admin->name);
             session()->put('photo',$admin->photo);
-            return redirect('destination/list')->with('success','Login Successfully');
+            return redirect('resto/list')->with('success','Login Successfully');
         }
     }
 

@@ -25,12 +25,39 @@ class CartController extends Controller
             $carts[$x]->tables = $tables;
 
             $carts[$x]->resto = Resto::where('id',$cart->resto_id)->first();
-            $carts[$x]->overall_price += $cart->total_price;
         }
 
         return response()->json([
             "status" => 200,
             "data" => $carts],
+            200
+        );
+    }
+
+    public function detail($id) {
+        $user = auth()->id();
+
+        $cart = Cart::where('id',$id)->where('carted_by',$user)->first();
+        if(!$cart) {
+            return response()->json([
+                "status" => 404,
+                "message"=> "Cart data not found"],
+                404
+            );
+        }
+
+        $tables = Detail_Cart::where('cart_id',$cart->id)->get();
+        $tables = $tables->map(function ($table) {
+            $table->table = Table::where('id',$table->table_id)->first();
+            return $table;
+        });
+        $cart->tables = $tables;
+
+        $cart->resto = Resto::where('id',$cart->resto_id)->first();
+
+        return response()->json([
+            "status" => 200,
+            "data" => $cart],
             200
         );
     }

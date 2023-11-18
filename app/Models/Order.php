@@ -11,7 +11,7 @@ class Order extends Model
 
     protected $table = 'table_order';
     protected $primaryKey = 'id';
-    protected $fillable = ['order_id','name','resto_id','total_table','total_price','ordered_by'];
+    protected $fillable = ['order_id','status','name','resto_id','total_table','total_price','ordered_by'];
 
     public function resto() {
         return $this->belongsTo('App\Models\Resto', 'resto_id');
